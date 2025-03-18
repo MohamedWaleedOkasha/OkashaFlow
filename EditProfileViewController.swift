@@ -32,7 +32,8 @@ class EditProfileViewController: UIViewController, UIImagePickerControllerDelega
     private let saveButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Save Changes", for: .normal)
-        button.backgroundColor = .systemBlue
+        // Updated custom blue
+        button.backgroundColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 12
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -250,4 +251,4 @@ class EditProfileViewController: UIViewController, UIImagePickerControllerDelega
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         picker.dismiss(animated: true)
     }
-} 
+}

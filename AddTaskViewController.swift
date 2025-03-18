@@ -1,7 +1,7 @@
 import UIKit
 import UserNotifications
 
-class AddTaskViewController: BaseViewController {
+class AddTaskViewController: UIViewController {
     
     // MARK: - UI Elements
     private let taskTextField = UITextField()
@@ -40,6 +40,13 @@ class AddTaskViewController: BaseViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Add Task"
+        
+        // Set the background color based on user interface style.
+        if traitCollection.userInterfaceStyle == .dark {
+            view.backgroundColor = .black
+        } else {
+            view.backgroundColor = .white
+        }
         
         // Configure UI elements to respect system appearance
         if #available(iOS 13.0, *) {

@@ -102,10 +102,22 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        title = "Calendar"
+        
+        if traitCollection.userInterfaceStyle == .dark {
+            view.backgroundColor = UIColor.black
+        } else {
+            view.backgroundColor = UIColor.systemBackground
+        }
         
         setupCalendarCollectionView()
+        
+        if traitCollection.userInterfaceStyle == .dark {
+            // Set the calendar collection view’s background to black in dark mode.
+            calendarCollectionView.backgroundColor = UIColor.black
+        } else {
+            calendarCollectionView.backgroundColor = UIColor.systemBackground
+        }
+        
         setupUI()
         configureTableView()
         computeDaysInMonth(for: selectedDate)
@@ -116,6 +128,19 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
         addTaskButton.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
         prevMonthButton.addTarget(self, action: #selector(prevMonthTapped), for: .touchUpInside)
         nextMonthButton.addTarget(self, action: #selector(nextMonthTapped), for: .touchUpInside)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Hide the add notes button when the menu tab is open.
+        // Adjust the condition (e.g., comparing selectedIndex or view controller identifier) as needed.
+        if let selectedVC = tabBarController?.selectedViewController,
+           selectedVC.title == "Menu" {
+            addTaskButton.isHidden = true
+        } else {
+            addTaskButton.isHidden = false
+        }
     }
     
     // MARK: - UI Setup
@@ -381,30 +406,35 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
             let dayNumber = calendar.component(.day, from: dayDate)
             cell.dayLabel.text = "\(dayNumber)"
             
-            // Check if this is the current day
+            // Check if this is the current day and/or selected day.
             let isToday = calendar.isDateInToday(dayDate)
-            // Check if this is the selected date
             let isSelected = calendar.isDate(dayDate, inSameDayAs: selectedDate)
             
-            // Set background color based on conditions
-            if isToday && isSelected {
-                cell.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.5)
-            } else if isToday {
-                cell.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
-            } else if isSelected {
-                cell.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.3)
+            if traitCollection.userInterfaceStyle == .dark {
+                // In dark mode: selected day is grey, others are black.
+                if isSelected {
+                    cell.backgroundColor = UIColor.systemGray
+                } else {
+                    cell.backgroundColor = .black
+                }
             } else {
-                cell.backgroundColor = .white
+                // In light mode: selected day is grey, today is green, otherwise white.
+                if isSelected {
+                    cell.backgroundColor = UIColor.systemGray.withAlphaComponent(0.3)
+                } else if isToday {
+                    cell.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
+                } else {
+                    cell.backgroundColor = .white
+                }
             }
             
-            // If the day has tasks, set the label's text color to red.
             cell.dayLabel.textColor = hasTask(on: dayDate) ? .red : .label
         } else {
             cell.dayLabel.text = ""
             cell.backgroundColor = .clear
         }
         
-        // Modern styling.
+        // Styling.
         cell.layer.shadowColor = UIColor.black.cgColor
         cell.layer.shadowOpacity = 0.2
         cell.layer.shadowOffset = CGSize(width: 0, height: 2)

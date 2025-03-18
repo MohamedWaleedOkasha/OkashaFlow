@@ -28,7 +28,8 @@ class InterestsViewController: UIViewController {
     
     private let saveButton: UIButton = {
         let button = UIButton(type: .system)
-        button.backgroundColor = .systemBlue
+        // Use custom blue color
+        button.backgroundColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 12
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -165,4 +166,4 @@ class InterestCell: UICollectionViewCell {
         contentView.backgroundColor = isSelected ? .systemBlue : .systemGray6
         titleLabel.textColor = isSelected ? .white : .label
     }
-} 
+}

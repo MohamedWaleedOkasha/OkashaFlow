@@ -16,7 +16,8 @@ class ExamSchedulerViewController: UIViewController {
     private let dateRangeButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Select Study Period", for: .normal)
-        button.backgroundColor = .systemBlue
+        // Updated custom blue
+        button.backgroundColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
         button.setTitleColor(.white, for: .normal)
         button.layer.cornerRadius = 8
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -383,4 +384,4 @@ extension StudyDayCell: UITableViewDataSource, UITableViewDelegate {
             tableView.deleteRows(at: [indexPath], with: .fade)
         }
     }
-} 
+}
