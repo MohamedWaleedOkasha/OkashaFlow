@@ -1,7 +1,7 @@
 import UIKit
 import UserNotifications
 
-class AddTaskViewController: BaseViewController {
+class AddTaskViewController: UIViewController {
     
     // MARK: - UI Elements
     private let taskTextField = UITextField()
@@ -22,6 +22,7 @@ class AddTaskViewController: BaseViewController {
         let label = UILabel()
         label.text = "Set Reminder"
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)  // Updated font to match dueDateLabel
         return label
     }()
     
@@ -36,10 +37,25 @@ class AddTaskViewController: BaseViewController {
         return picker
     }()
     
+    private let dueDateLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "Select Due Date"
+        label.font = UIFont.systemFont(ofSize: 16, weight: .medium)
+        return label
+    }()
+    
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Add Task"
+        
+        // Set the background color based on user interface style.
+        if traitCollection.userInterfaceStyle == .dark {
+            view.backgroundColor = .black
+        } else {
+            view.backgroundColor = .white
+        }
         
         // Configure UI elements to respect system appearance
         if #available(iOS 13.0, *) {
@@ -111,7 +127,7 @@ class AddTaskViewController: BaseViewController {
         prioritySegmentedControl.selectedSegmentIndex = 1
         prioritySegmentedControl.translatesAutoresizingMaskIntoConstraints = false
         
-        // Configure Date Picker
+        // Configure Due Date Label and Date Picker
         timeDatePicker.datePickerMode = .dateAndTime
         timeDatePicker.translatesAutoresizingMaskIntoConstraints = false
         if #available(iOS 13.4, *) {
@@ -131,6 +147,7 @@ class AddTaskViewController: BaseViewController {
         view.addSubview(descriptionTextView)
         view.addSubview(categorySegmentedControl)
         view.addSubview(prioritySegmentedControl)
+        view.addSubview(dueDateLabel)
         view.addSubview(timeDatePicker)
         view.addSubview(reminderLabel)
         view.addSubview(reminderSwitch)
@@ -156,7 +173,11 @@ class AddTaskViewController: BaseViewController {
             prioritySegmentedControl.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             prioritySegmentedControl.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             
-            timeDatePicker.topAnchor.constraint(equalTo: prioritySegmentedControl.bottomAnchor, constant: 20),
+            dueDateLabel.topAnchor.constraint(equalTo: prioritySegmentedControl.bottomAnchor, constant: 20),
+            dueDateLabel.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            dueDateLabel.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            
+            timeDatePicker.topAnchor.constraint(equalTo: dueDateLabel.bottomAnchor, constant: 8),
             timeDatePicker.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
             timeDatePicker.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             

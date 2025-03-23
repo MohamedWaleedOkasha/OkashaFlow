@@ -112,6 +112,15 @@ class PomodoroViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = .systemBackground
         title = "Focus Mode"
+        
+        // Activate audio session for background audio
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [])
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            print("Audio session error: \(error.localizedDescription)")
+        }
+        
         setupUI()
         updateTimerLabel()
         updateSessionProgress()
@@ -235,16 +244,16 @@ class PomodoroViewController: UIViewController {
             timer?.invalidate()
             timer = nil
             isTimerRunning = false
-            audioPlayer?.stop()
+            audioPlayer?.stop() // Stop any white noise
             feedbackGenerator.notificationOccurred(.success)
-            playAlertSound()
-            
-            // Update statistics when a focus session completes
+            playAlertSound()  // Start alarm sound
+
+            // Update Pomodoro stats if session ended
             if mode == .focus {
                 updatePomodoroStats()
             }
             
-            // Transition to the next mode
+            // Transition to next mode
             if mode == .focus {
                 sessionCount += 1
                 if sessionCount % 4 == 0 {
@@ -260,10 +269,15 @@ class PomodoroViewController: UIViewController {
             }
             updateSessionProgress()
             updateTimerLabel()
-            
+
             let modeName = (mode == .focus) ? "Focus" : (mode == .shortBreak ? "Short Break" : "Long Break")
             let alert = UIAlertController(title: "Session Complete", message: "Starting \(modeName) session.", preferredStyle: .alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            alert.addAction(UIAlertAction(title: "Stop Alarm", style: .default, handler: { _ in
+                self.audioPlayer?.stop()
+            }))
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: { _ in
+                self.audioPlayer?.stop()
+            }))
             present(alert, animated: true, completion: nil)
         }
     }
@@ -284,7 +298,19 @@ class PomodoroViewController: UIViewController {
     }
     
     private func playAlertSound() {
-        AudioServicesPlaySystemSound(1005)
+        guard let alertUrl = Bundle.main.url(forResource: "alarm", withExtension: "mp3") else {
+            // Fallback to system sound if alarm file not found
+            AudioServicesPlaySystemSound(1005)
+            return
+        }
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: alertUrl)
+            audioPlayer?.numberOfLoops = -1   // Loop alarm indefinitely
+            audioPlayer?.play()
+        } catch {
+            print("Error playing alarm sound: \(error.localizedDescription)")
+            AudioServicesPlaySystemSound(1005)
+        }
     }
     
     // MARK: - Customization Slider Actions

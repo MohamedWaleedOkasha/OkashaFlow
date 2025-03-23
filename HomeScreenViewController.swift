@@ -9,9 +9,6 @@ extension Notification.Name {
     static let backgroundColorChanged = Notification.Name("backgroundColorChanged")
 }
 
-// Add this property to store the color key
-private let backgroundColorKey = "selectedBackgroundColor"
-
 class HomeScreenViewController: UIViewController {
     
     // MARK: - Properties
@@ -60,6 +57,22 @@ class HomeScreenViewController: UIViewController {
         return button
     }()
     
+    // Floating Add Notes Button
+    private let addNotesButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setTitle("Add Notes", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
+        button.backgroundColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 25
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOffset = CGSize(width: 0, height: 2)
+        button.layer.shadowRadius = 4
+        button.layer.shadowOpacity = 0.2
+        button.translatesAutoresizingMaskIntoConstraints = false
+        return button
+    }()
+    
     // Bottom Navigation Bar
     private let bottomNavBar: UIView = {
         let view = UIView()
@@ -81,14 +94,14 @@ class HomeScreenViewController: UIViewController {
         return button
     }()
     
-    private let aiChatButton: UIButton = {
-        let button = UIButton(type: .system)
-        let config = UIImage.SymbolConfiguration(pointSize: 24)
-        button.setImage(UIImage(systemName: "message.fill", withConfiguration: config), for: .normal)
-        button.tintColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        return button
-    }()
+//    private let aiChatButton: UIButton = {
+//        let button = UIButton(type: .system)
+//        let config = UIImage.SymbolConfiguration(pointSize: 24)
+//        button.setImage(UIImage(systemName: "message.fill", withConfiguration: config), for: .normal)
+//        button.tintColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
+//        button.translatesAutoresizingMaskIntoConstraints = false
+//        return button
+//    }()
     
     private let calendarButton: UIButton = {
         let button = UIButton(type: .system)
@@ -154,30 +167,6 @@ class HomeScreenViewController: UIViewController {
         return view
     }()
     
-    // First, add these properties at the top of HomeScreenViewController
-    private let colorSelectorView: UIView = {
-        let view = UIView()
-        view.translatesAutoresizingMaskIntoConstraints = false
-        return view
-    }()
-    
-    private let colorLabel: UILabel = {
-        let label = UILabel()
-        label.text = "Background:"
-        label.font = .systemFont(ofSize: 14)
-        label.translatesAutoresizingMaskIntoConstraints = false
-        return label
-    }()
-    
-    private let colorStackView: UIStackView = {
-        let stack = UIStackView()
-        stack.axis = .horizontal
-        stack.spacing = 12
-        stack.distribution = .fillEqually
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        return stack
-    }()
-    
     // MARK: - Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -194,16 +183,18 @@ class HomeScreenViewController: UIViewController {
         
         view.addSubview(mainContentView)
         view.addSubview(addTaskButton)
+        view.addSubview(addNotesButton)
         view.addSubview(bottomNavBar)
         
         bottomNavBar.addSubview(pomodoroButton)
-        bottomNavBar.addSubview(aiChatButton)
+//        bottomNavBar.addSubview(aiChatButton)
         bottomNavBar.addSubview(calendarButton)
         
         // Button targets
         addTaskButton.addTarget(self, action: #selector(addTodoTapped), for: .touchUpInside)
+        addNotesButton.addTarget(self, action: #selector(addNotesTapped), for: .touchUpInside)
         pomodoroButton.addTarget(self, action: #selector(startPomodoro), for: .touchUpInside)
-        aiChatButton.addTarget(self, action: #selector(aiChatTapped), for: .touchUpInside)
+//        aiChatButton.addTarget(self, action: #selector(aiChatTapped), for: .touchUpInside)
         calendarButton.addTarget(self, action: #selector(addCalendarTapped), for: .touchUpInside)
         menuButton.addTarget(self, action: #selector(toggleSideMenu), for: .touchUpInside)
         
@@ -215,16 +206,8 @@ class HomeScreenViewController: UIViewController {
         
         setupTableView()
         
-        // Load saved background color
-        loadSavedBackgroundColor()
-        
-        // Listen for background color changes
-        NotificationCenter.default.addObserver(self, 
-                                             selector: #selector(handleBackgroundColorChange(_:)), 
-                                             name: .backgroundColorChanged, 
-                                             object: nil)
-        
         requestNotificationPermission()
+        updateAppearance()
     }
     
     // MARK: - Layout Setup
@@ -242,6 +225,12 @@ class HomeScreenViewController: UIViewController {
             addTaskButton.widthAnchor.constraint(equalToConstant: 120),
             addTaskButton.heightAnchor.constraint(equalToConstant: 50),
             
+            // New addNotesButton on opposite side (left side)
+            addNotesButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            addNotesButton.bottomAnchor.constraint(equalTo: bottomNavBar.topAnchor, constant: -20),
+            addNotesButton.widthAnchor.constraint(equalToConstant: 120),
+            addNotesButton.heightAnchor.constraint(equalToConstant: 50),
+            
             bottomNavBar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             bottomNavBar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             bottomNavBar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
@@ -252,11 +241,11 @@ class HomeScreenViewController: UIViewController {
             pomodoroButton.widthAnchor.constraint(equalToConstant: 44),
             pomodoroButton.heightAnchor.constraint(equalToConstant: 44),
             
-            aiChatButton.centerYAnchor.constraint(equalTo: bottomNavBar.centerYAnchor, constant: -10),
-            aiChatButton.centerXAnchor.constraint(equalTo: bottomNavBar.centerXAnchor),
-            aiChatButton.widthAnchor.constraint(equalToConstant: 44),
-            aiChatButton.heightAnchor.constraint(equalToConstant: 44),
-            
+//            aiChatButton.centerYAnchor.constraint(equalTo: bottomNavBar.centerYAnchor, constant: -10),
+//            aiChatButton.centerXAnchor.constraint(equalTo: bottomNavBar.centerXAnchor),
+//            aiChatButton.widthAnchor.constraint(equalToConstant: 44),
+//            aiChatButton.heightAnchor.constraint(equalToConstant: 44),
+//            
             calendarButton.centerYAnchor.constraint(equalTo: bottomNavBar.centerYAnchor, constant: -10),
             calendarButton.trailingAnchor.constraint(equalTo: bottomNavBar.trailingAnchor, constant: -60),
             calendarButton.widthAnchor.constraint(equalToConstant: 44),
@@ -289,6 +278,11 @@ class HomeScreenViewController: UIViewController {
             let nav = UINavigationController(rootViewController: addTaskVC)
             present(nav, animated: true, completion: nil)
         }
+    }
+    
+    @objc private func addNotesTapped() {
+        let notesVC = NotesViewController()
+        navigationController?.pushViewController(notesVC, animated: true)
     }
     
     @objc private func aiChatTapped() {
@@ -427,8 +421,10 @@ class HomeScreenViewController: UIViewController {
             self.bottomNavBar.alpha = self.isSideMenuOpen ? 0 : 1
             // Hide/show add task button
             self.addTaskButton.alpha = self.isSideMenuOpen ? 0 : 1
+            // Hide/show add notes button
+            self.addNotesButton.alpha = self.isSideMenuOpen ? 0 : 1
         } completion: { _ in
-            if !self.isSideMenuOpen {
+            if (!self.isSideMenuOpen) {
                 self.overlayView.isHidden = true
             }
         }
@@ -458,35 +454,6 @@ class HomeScreenViewController: UIViewController {
             button.addTarget(self, action: #selector(menuItemTapped(_:)), for: .touchUpInside)
             menuStackView.addArrangedSubview(button)
         }
-        
-        // Add color selector view
-        colorSelectorView.addSubview(colorLabel)
-        colorSelectorView.addSubview(colorStackView)
-        
-        // Create color buttons with new colors
-        let color1 = createColorButton(color: UIColor.systemBlue.withAlphaComponent(0.1))  // Light blue
-        let color2 = createColorButton(color: UIColor.systemYellow.withAlphaComponent(0.1))  // Light yellow
-        let color3 = createColorButton(color: UIColor.systemPink.withAlphaComponent(0.1))  // Light pink
-        let color4 = createColorButton(color: .white)  // White
-        // Add buttons to stack
-        [color1, color2, color3, color4].forEach { colorStackView.addArrangedSubview($0) }
-        
-        // Add to menu stack
-        menuStackView.addArrangedSubview(UIView())  // Spacer
-        menuStackView.addArrangedSubview(colorSelectorView)
-        
-        // Setup constraints for color selector
-        NSLayoutConstraint.activate([
-            colorLabel.topAnchor.constraint(equalTo: colorSelectorView.topAnchor),
-            colorLabel.leadingAnchor.constraint(equalTo: colorSelectorView.leadingAnchor),
-            colorLabel.bottomAnchor.constraint(equalTo: colorSelectorView.bottomAnchor),
-            
-            colorStackView.centerYAnchor.constraint(equalTo: colorLabel.centerYAnchor),
-            colorStackView.leadingAnchor.constraint(equalTo: colorLabel.trailingAnchor, constant: 8),
-            colorStackView.trailingAnchor.constraint(lessThanOrEqualTo: colorSelectorView.trailingAnchor),
-            
-            colorSelectorView.heightAnchor.constraint(equalToConstant: 40)
-        ])
     }
     
     private func loadUserProfile() {
@@ -507,10 +474,20 @@ class HomeScreenViewController: UIViewController {
     
     private func loadProfileImage(from urlString: String) {
         guard let url = URL(string: urlString) else { return }
-        
         URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
-            guard let data = data, let image = UIImage(data: data) else { return }
-            
+            if let error = error {
+                print("Error loading profile image: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self?.userProfileButton.setImage(UIImage(systemName: "person.circle.fill"), for: .normal)
+                }
+                return
+            }
+            guard let data = data, let image = UIImage(data: data) else {
+                DispatchQueue.main.async {
+                    self?.userProfileButton.setImage(UIImage(systemName: "person.circle.fill"), for: .normal)
+                }
+                return
+            }
             DispatchQueue.main.async {
                 self?.userProfileButton.setImage(image, for: .normal)
             }
@@ -574,8 +551,8 @@ class HomeScreenViewController: UIViewController {
                     }
                 } catch {
                     // Show error alert if logout fails
-                    let errorAlert = UIAlertController(title: "Error", 
-                                                     message: "Failed to logout: \(error.localizedDescription)", 
+                    let errorAlert = UIAlertController(title: "Error",
+                                                     message: "Failed to logout: \(error.localizedDescription)",
                                                      preferredStyle: .alert)
                     errorAlert.addAction(UIAlertAction(title: "OK", style: .default))
                     self?.present(errorAlert, animated: true)
@@ -598,7 +575,7 @@ class HomeScreenViewController: UIViewController {
     }
     
     func setupTableView() {
-        toDoTableView.register(CategorySectionHeader.self, 
+        toDoTableView.register(CategorySectionHeader.self,
                              forHeaderFooterViewReuseIdentifier: CategorySectionHeader.reuseIdentifier)
         toDoTableView.sectionHeaderTopPadding = 0
         toDoTableView.backgroundColor = .clear
@@ -650,8 +627,8 @@ class HomeScreenViewController: UIViewController {
         let color: UIColor
         switch indexPath.section {
         case 0: color = .systemBlue
-        case 1: color = .systemGreen
-        case 2: color = .systemOrange
+        case 1: color = .systemBlue
+        case 2: color = .systemBlue
         default: color = .systemGray
         }
         
@@ -671,78 +648,60 @@ class HomeScreenViewController: UIViewController {
         return 40
     }
     
-    // Add this method to create color buttons
-    private func createColorButton(color: UIColor) -> UIButton {
-        let button = UIButton(type: .system)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.backgroundColor = color
-        button.layer.cornerRadius = 8
-        button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.systemGray4.cgColor
-        button.addTarget(self, action: #selector(colorButtonTapped(_:)), for: .touchUpInside)
-        
-        // Set fixed size constraints
-        NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: 16),
-            button.heightAnchor.constraint(equalToConstant: 16)
-        ])
-        
-        return button
-    }
-    
-    // Update the colorButtonTapped method
-    @objc private func colorButtonTapped(_ sender: UIButton) {
-        var selectedColor: UIColor = .white
-        
-        if sender.backgroundColor == .white {
-            selectedColor = .white
-        } else if sender.backgroundColor == UIColor.systemBlue.withAlphaComponent(0.1) {
-            selectedColor = UIColor.systemBlue.withAlphaComponent(0.1)
-        } else if sender.backgroundColor == UIColor.systemYellow.withAlphaComponent(0.1) {
-            selectedColor = UIColor.systemYellow.withAlphaComponent(0.1)
-        } else if sender.backgroundColor == UIColor.systemPink.withAlphaComponent(0.1) {
-            selectedColor = UIColor.systemPink.withAlphaComponent(0.1)
-        }
-        
-        // Save color to UserDefaults using new API
-        do {
-            let colorData = try NSKeyedArchiver.archivedData(withRootObject: selectedColor, requiringSecureCoding: true)
-            UserDefaults.standard.set(colorData, forKey: backgroundColorKey)
-        } catch {
-            print("Error archiving color: \(error)")
-        }
-        
-        // Apply color
-        applyBackgroundColor(selectedColor)
-        
-        // Notify other views
-        NotificationCenter.default.post(name: .backgroundColorChanged, object: selectedColor)
-    }
-    
-    // Add this method to apply the background color
-    private func applyBackgroundColor(_ color: UIColor) {
-        view.backgroundColor = color
-        mainContentView.backgroundColor = color
-    }
-    
-    // Add these new methods
-    private func loadSavedBackgroundColor() {
-        if let colorData = UserDefaults.standard.data(forKey: backgroundColorKey) {
-            do {
-                if let color = try NSKeyedUnarchiver.unarchivedObject(ofClass: UIColor.self, from: colorData) {
-                    applyBackgroundColor(color)
-                }
-            } catch {
-                print("Error unarchiving color: \(error)")
-            }
-        }
-    }
-    
-    @objc private func handleBackgroundColorChange(_ notification: Notification) {
-        if let color = notification.object as? UIColor {
-            applyBackgroundColor(color)
-        }
-    }
+//    // Add this method to create color buttons
+//    private func createColorButton(color: UIColor) -> UIButton {
+//        let button = UIButton(type: .system)
+//        button.translatesAutoresizingMaskIntoConstraints = false
+//        button.backgroundColor = color
+//        button.layer.cornerRadius = 8
+//        button.layer.borderWidth = 1
+//        button.layer.borderColor = UIColor.systemGray4.cgColor
+//        button.addTarget(self, action: #selector(colorButtonTapped(_:)), for: .touchUpInside)
+//
+//        // Set fixed size constraints
+//        NSLayoutConstraint.activate([
+//            button.widthAnchor.constraint(equalToConstant: 16),
+//            button.heightAnchor.constraint(equalToConstant: 16)
+//        ])
+//
+//        return button
+//    }
+//
+//    // Update the colorButtonTapped method
+//    @objc private func colorButtonTapped(_ sender: UIButton) {
+//        var selectedColor: UIColor = .white
+//
+//        if sender.backgroundColor == .white {
+//            selectedColor = .white
+//        } else if sender.backgroundColor == UIColor.systemBlue.withAlphaComponent(0.1) {
+//            selectedColor = UIColor.systemBlue.withAlphaComponent(0.1)
+//        } else if sender.backgroundColor == UIColor.systemYellow.withAlphaComponent(0.1) {
+//            selectedColor = UIColor.systemYellow.withAlphaComponent(0.1)
+//        } else if sender.backgroundColor == UIColor.systemPink.withAlphaComponent(0.1) {
+//            selectedColor = UIColor.systemPink.withAlphaComponent(0.1)
+//        }
+//
+//        // Save color to UserDefaults using new API
+//        do {
+//            let colorData = try NSKeyedArchiver.archivedData(withRootObject: selectedColor, requiringSecureCoding: true)
+//            UserDefaults.standard.set(colorData, forKey: backgroundColorKey)
+//        } catch {
+//            print("Error archiving color: \(error)")
+//        }
+//
+//        // Apply color
+//        applyBackgroundColor(selectedColor)
+//
+//        // Notify other views
+//        NotificationCenter.default.post(name: .backgroundColorChanged, object: selectedColor)
+//    }
+//
+//    // Add this method to apply the background color
+//    private func applyBackgroundColor(_ color: UIColor) {
+//        let opaqueColor = color.withAlphaComponent(1.0)
+//        view.backgroundColor = opaqueColor
+//        mainContentView.backgroundColor = opaqueColor
+//    }
     
     private func clearUserData() {
         // Clear UserDefaults
@@ -771,7 +730,7 @@ class HomeScreenViewController: UIViewController {
                     return
                 }
                 
-                if !granted {
+                if (!granted) {
                     self?.showAlert(message: "Please enable notifications in Settings to receive task reminders.")
                 }
             }
@@ -841,6 +800,24 @@ class HomeScreenViewController: UIViewController {
                 }
             }
         }
+    }
+    
+    private func updateAppearance() {
+        if traitCollection.userInterfaceStyle == .dark {
+            view.backgroundColor = .black
+            mainContentView.backgroundColor = .black
+            // Let the table background be clear so that only the cells show their grey background.
+            toDoTableView.backgroundColor = .clear
+        } else {
+            view.backgroundColor = .white
+            mainContentView.backgroundColor = .white
+            toDoTableView.backgroundColor = .white
+        }
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        updateAppearance()
     }
 }
 
@@ -991,7 +968,8 @@ class TodoTableViewCell: UITableViewCell {
     private let checkBoxButton: UIButton = {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "square"), for: .normal)
-        button.tintColor = .systemGreen
+        // Updated custom green color RGB(9, 35, 39)
+        button.tintColor = UIColor(red: 9/255, green: 35/255, blue: 39/255, alpha: 1)
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
@@ -1000,6 +978,8 @@ class TodoTableViewCell: UITableViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 16)
         label.translatesAutoresizingMaskIntoConstraints = false
+        label.numberOfLines = 1
+        label.lineBreakMode = .byTruncatingTail
         return label
     }()
     
@@ -1043,79 +1023,93 @@ class TodoTableViewCell: UITableViewCell {
     private func setupCellUI() {
         backgroundColor = .clear
         selectionStyle = .none
-        
-        // Add a container view
+
+        // Create a container view for layout
         let containerView = UIView()
         containerView.translatesAutoresizingMaskIntoConstraints = false
-        
         contentView.addSubview(containerView)
-        
-        // Add all existing subviews to containerView
+
+        // Add subviews to containerView (include overdueLabel)
+        containerView.addSubview(overdueLabel)
         containerView.addSubview(checkBoxButton)
         containerView.addSubview(taskLabel)
         containerView.addSubview(timeLabel)
         containerView.addSubview(priorityIndicator)
-        
+
         NSLayoutConstraint.activate([
+            // Container constraints
             containerView.topAnchor.constraint(equalTo: contentView.topAnchor),
             containerView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
             containerView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             containerView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
-            checkBoxButton.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
+
+            // overdueLabel constraints - placed at the left edge
+            overdueLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
+            overdueLabel.leadingAnchor.constraint(equalTo: containerView.leadingAnchor, constant: 8),
+
+            // Checkbox comes to the right of overdueLabel
+            checkBoxButton.leadingAnchor.constraint(equalTo: overdueLabel.trailingAnchor, constant: 8),
             checkBoxButton.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             checkBoxButton.widthAnchor.constraint(equalToConstant: 24),
             checkBoxButton.heightAnchor.constraint(equalToConstant: 24),
-            
+
+            // Task label between checkbox and priority indicator
             taskLabel.leadingAnchor.constraint(equalTo: checkBoxButton.trailingAnchor, constant: 8),
             taskLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            
-            timeLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
-            timeLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
-            
+            taskLabel.trailingAnchor.constraint(lessThanOrEqualTo: priorityIndicator.leadingAnchor, constant: -8),
+
+            // Priority indicator between task label and time label
             priorityIndicator.trailingAnchor.constraint(equalTo: timeLabel.leadingAnchor, constant: -8),
             priorityIndicator.centerYAnchor.constraint(equalTo: containerView.centerYAnchor),
             priorityIndicator.widthAnchor.constraint(equalToConstant: 6),
-            priorityIndicator.heightAnchor.constraint(equalToConstant: 6)
+            priorityIndicator.heightAnchor.constraint(equalToConstant: 6),
+
+            // Time label at the right edge
+            timeLabel.trailingAnchor.constraint(equalTo: containerView.trailingAnchor, constant: -8),
+            timeLabel.centerYAnchor.constraint(equalTo: containerView.centerYAnchor)
         ])
-        
+
         checkBoxButton.addTarget(self, action: #selector(checkBoxTapped), for: .touchUpInside)
     }
-    
+    // Declare overdueLabel for overdue tasks.
+    private let overdueLabel: UILabel = {
+        let label = UILabel()
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.text = "❗️"  // One red exclamation mark
+        label.font = .systemFont(ofSize: 16)
+        label.textColor = .systemRed
+        label.isHidden = true
+        return label
+    }()
     func configure(task: Task) {
         taskLabel.text = task.title
         
-        // Format the date to include both date and time
+        // Format date for timeLabel
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "MMM d, h:mm a"
         timeLabel.text = dateFormatter.string(from: task.dueDate)
         
-        // Check if task is overdue
         let isOverdue = task.dueDate < Date()
-        overdueIndicator.isHidden = !isOverdue
         
-        if isOverdue {
-            taskLabel.textColor = .systemRed
-            timeLabel.textColor = .systemRed
-            contentView.backgroundColor = UIColor.systemRed.withAlphaComponent(0.1)
+        // Instead of changing the text color when overdue,
+        // show a single red exclamation mark indicator.
+        overdueLabel.text = "❗️"
+        overdueLabel.isHidden = !isOverdue
+        
+        if traitCollection.userInterfaceStyle == .dark {
+            // Dark mode: use custom dark grey background and white text plus white checkbox
+            contentView.backgroundColor = UIColor(red: 28/255, green: 28/255, blue: 28/255, alpha: 1)
+            taskLabel.textColor = .white
+            timeLabel.textColor = .white
+            checkBoxButton.tintColor = .white  // Set checkbox tint color to white in dark mode
         } else {
-            taskLabel.textColor = .label
+            // Light mode: white background with dark text and custom checkbox tint
+            contentView.backgroundColor = .white
+            taskLabel.textColor = .black
             timeLabel.textColor = .systemGray
-            
-            // Set background color based on category
-            switch task.category {
-            case "Work":
-                contentView.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.05)
-            case "Study":
-                contentView.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.05)
-            case "Personal":
-                contentView.backgroundColor = UIColor.systemOrange.withAlphaComponent(0.05)
-            default:
-            contentView.backgroundColor = .systemBackground
-            }
+            checkBoxButton.tintColor = UIColor(red: 9/255, green: 35/255, blue: 39/255, alpha: 1)
         }
-        
-        // Start unchecked
+        // Ensure the checkbox starts unchecked.
         checkBoxButton.setImage(UIImage(systemName: "square"), for: .normal)
     }
     
@@ -1140,7 +1134,8 @@ class TodoTableViewCell: UITableViewCell {
     }
 }
 
-// Add this new class for the custom section header
+// Update the CategorySectionHeader class:
+
 class CategorySectionHeader: UITableViewHeaderFooterView {
     static let reuseIdentifier = "CategorySectionHeader"
     
@@ -1186,21 +1181,34 @@ class CategorySectionHeader: UITableViewHeaderFooterView {
     
     func configure(with title: String, color: UIColor) {
         titleLabel.text = title
-        titleLabel.textColor = color
+        
+        // In dark mode, force the title label to be white.
+        if traitCollection.userInterfaceStyle == .dark {
+            titleLabel.textColor = .white
+        } else {
+            if title == "Work" || title == "Study" || title == "Personal" {
+                titleLabel.textColor = UIColor(red: 14/255, green: 28/255, blue: 54/255, alpha: 1)
+            } else {
+                titleLabel.textColor = color
+            }
+        }
+        
         containerView.layer.borderWidth = 1
-        containerView.layer.borderColor = color.withAlphaComponent(0.3).cgColor
+        if title == "Work" || title == "Study" || title == "Personal" {
+            containerView.layer.borderColor = UIColor(red: 10/255, green: 36/255, blue: 114/255, alpha: 1).cgColor
+        } else {
+            containerView.layer.borderColor = color.withAlphaComponent(0.3).cgColor
+        }
         containerView.layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
         
-        // Add very light background color
+        // Set the background color based on the title.
+        let customBackground = UIColor(red: 150/255, green: 205/255, blue: 255/255, alpha: 1)
         switch title {
-        case "Work":
-            containerView.backgroundColor = .systemBlue.withAlphaComponent(0.05)
-        case "Study":
-            containerView.backgroundColor = .systemGreen.withAlphaComponent(0.05)
-        case "Personal":
-            containerView.backgroundColor = .systemOrange.withAlphaComponent(0.05)
+        case "Work", "Study", "Personal":
+            containerView.backgroundColor = customBackground.withAlphaComponent(0.3)
         default:
             containerView.backgroundColor = .systemBackground
         }
     }
 }
+

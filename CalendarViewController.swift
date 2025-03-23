@@ -102,10 +102,22 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .systemBackground
-        title = "Calendar"
+        
+        if traitCollection.userInterfaceStyle == .dark {
+            view.backgroundColor = UIColor.black
+        } else {
+            view.backgroundColor = UIColor.systemBackground
+        }
         
         setupCalendarCollectionView()
+        
+        if traitCollection.userInterfaceStyle == .dark {
+            // Set the calendar collection view’s background to black in dark mode.
+            calendarCollectionView.backgroundColor = UIColor.black
+        } else {
+            calendarCollectionView.backgroundColor = UIColor.systemBackground
+        }
+        
         setupUI()
         configureTableView()
         computeDaysInMonth(for: selectedDate)
@@ -116,6 +128,19 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
         addTaskButton.addTarget(self, action: #selector(addTaskTapped), for: .touchUpInside)
         prevMonthButton.addTarget(self, action: #selector(prevMonthTapped), for: .touchUpInside)
         nextMonthButton.addTarget(self, action: #selector(nextMonthTapped), for: .touchUpInside)
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        // Hide the add notes button when the menu tab is open.
+        // Adjust the condition (e.g., comparing selectedIndex or view controller identifier) as needed.
+        if let selectedVC = tabBarController?.selectedViewController,
+           selectedVC.title == "Menu" {
+            addTaskButton.isHidden = true
+        } else {
+            addTaskButton.isHidden = false
+        }
     }
     
     // MARK: - UI Setup
@@ -381,30 +406,88 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
             let dayNumber = calendar.component(.day, from: dayDate)
             cell.dayLabel.text = "\(dayNumber)"
             
-            // Check if this is the current day
+            // Check if this is the current day and/or selected day.
             let isToday = calendar.isDateInToday(dayDate)
-            // Check if this is the selected date
             let isSelected = calendar.isDate(dayDate, inSameDayAs: selectedDate)
             
-            // Set background color based on conditions
-            if isToday && isSelected {
-                cell.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.5)
-            } else if isToday {
-                cell.backgroundColor = UIColor.systemGreen.withAlphaComponent(0.3)
-            } else if isSelected {
-                cell.backgroundColor = UIColor.systemBlue.withAlphaComponent(0.3)
+            if traitCollection.userInterfaceStyle == .dark {
+                if isSelected {
+                    cell.backgroundColor = UIColor.systemGray
+                } else if isToday {
+                    cell.backgroundColor = UIColor(red: 135/255, green: 206/255, blue: 235/255, alpha: 0.3)
+                } else {
+                    cell.backgroundColor = .black
+                }
             } else {
-                cell.backgroundColor = .white
+                if isSelected {
+                    cell.backgroundColor = UIColor.systemGray.withAlphaComponent(0.3)
+                } else if isToday {
+                    cell.backgroundColor = UIColor(red: 135/255, green: 206/255, blue: 235/255, alpha: 0.3)
+                } else {
+                    cell.backgroundColor = .white
+                }
             }
             
-            // If the day has tasks, set the label's text color to red.
-            cell.dayLabel.textColor = hasTask(on: dayDate) ? .red : .label
+            // Always use the default label color.
+            cell.dayLabel.textColor = .label
+            
+            // Determine the tasks for this day.
+            let tasksForDay = tasks(for: dayDate)
+            if !tasksForDay.isEmpty {
+                // Set indicator: grey if any task is recurring; otherwise blue.
+                if tasksForDay.contains(where: { $0.recurrence != nil }) {
+                    cell.indicatorView.backgroundColor = UIColor.systemOrange
+                } else {
+                    cell.indicatorView.backgroundColor = UIColor.blue
+                }
+                cell.indicatorView.isHidden = false
+                
+                // Emoji mapping for various task keywords (applies regardless of recurrence).
+                let emojiMapping: [String: String] = [
+                    "gym": "🏋️‍♂️",
+                    "workout": "🏋️‍♂️",
+                    "excercise": "🏋️‍♂️",
+                    "study": "📚",
+                    "read": "📚",
+                    "eating": "🍽️",
+                    "eat": "🍽️",
+                    "food": "🍽️",
+                    "dog": "🐶",
+                    "pet": "🐶",
+                    "walk": "🚶‍♂️",
+                    "jog": "🚶‍♂️",
+                    "run": "🚶‍♂️",
+                    "doctor": "🏥",
+                    "hospital": "🏥",
+                    "exam":"❗❗",
+                    "quiz":"❗❗",
+                    "assignment":"❗❗"
+                ]
+                var foundEmoji: String?
+                for (keyword, emoji) in emojiMapping {
+                    if tasksForDay.contains(where: { $0.title.lowercased().contains(keyword) }) {
+                        foundEmoji = emoji
+                        break
+                    }
+                }
+                if let emoji = foundEmoji {
+                    cell.emojiLabel.text = emoji
+                    cell.emojiLabel.isHidden = false
+                } else {
+                    cell.emojiLabel.isHidden = true
+                }
+            } else {
+                cell.indicatorView.isHidden = true
+                cell.emojiLabel.isHidden = true
+            }
         } else {
             cell.dayLabel.text = ""
             cell.backgroundColor = .clear
+            cell.indicatorView.isHidden = true
+            cell.emojiLabel.isHidden = true
         }
         
-        // Modern styling.
+        // Existing styling.
         cell.layer.shadowColor = UIColor.black.cgColor
         cell.layer.shadowOpacity = 0.2
         cell.layer.shadowOffset = CGSize(width: 0, height: 2)
@@ -498,6 +581,40 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
                 print("Error scheduling notification: \(error.localizedDescription)")
             } else {
                 print("Notification scheduled for \"\(day.title)\" at \(reminderDate)")
+            }
+        }
+    }
+}
+
+extension CalendarViewController {
+    
+    private func tasks(for day: Date) -> [CalendarTask] {
+        // Return tasks that apply for the given day.
+        return tasks.filter { task in
+            let taskStart = calendar.startOfDay(for: task.date)
+            let dayStart = calendar.startOfDay(for: day)
+            if let recurrence = task.recurrence {
+                if task.date <= day {
+                    switch recurrence {
+                    case .daily:
+                        return true
+                    case .weekly:
+                        let taskWeekday = calendar.component(.weekday, from: taskStart)
+                        let dayWeekday = calendar.component(.weekday, from: dayStart)
+                        return taskWeekday == dayWeekday
+                    case .monthly:
+                        let taskDay = calendar.component(.day, from: taskStart)
+                        let dayComponent = calendar.component(.day, from: dayStart)
+                        return taskDay == dayComponent
+                    case .yearly:
+                        let taskComponents = calendar.dateComponents([.month, .day], from: taskStart)
+                        let dayComponents = calendar.dateComponents([.month, .day], from: dayStart)
+                        return (taskComponents.month == dayComponents.month) && (taskComponents.day == dayComponents.day)
+                    }
+                }
+                return false
+            } else {
+                return taskStart == dayStart
             }
         }
     }

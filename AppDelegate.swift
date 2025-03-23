@@ -20,7 +20,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
         
         return true
     }
-    
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        // Clear delivered notifications.
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        // Optionally, clear any pending notification requests.
+        UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
+    }
     func application(
         _ app: UIApplication,
         open url: URL,

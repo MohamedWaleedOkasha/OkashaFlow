@@ -72,17 +72,19 @@ class DailyReadingViewController: UIViewController {
         
         let apiKey = "34937cb764f749b4bfc8f3f5164d5a2f"
         let dispatchGroup = DispatchGroup()
-        articlesByInterest.removeAll()
         
-        // A serial queue to avoid race conditions when checking/adding duplicate URLs.
+        // Temporary container for results.
+        var results = [(interest: String, articles: [Article])]()
+        
+        // A serial queue to avoid race conditions.
         let syncQueue = DispatchQueue(label: "com.AIProductivity.usedArticleURLs")
         var usedArticleURLs = Set<String>()
         
-        // Fetch articles for each interest separately.
+        // Fetch articles for each interest.
         for interest in interests {
             dispatchGroup.enter()
             
-            // Include language=en to restrict results.
+            // Restrict to English; adjust pageSize as needed.
             let urlString = "https://newsapi.org/v2/everything?q=\(interest)&language=en&sortBy=publishedAt&pageSize=5&apiKey=\(apiKey)"
             guard let encodedString = urlString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
                   let url = URL(string: encodedString) else {
@@ -90,11 +92,12 @@ class DailyReadingViewController: UIViewController {
                 continue
             }
             
-            URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            URLSession.shared.dataTask(with: url) { data, response, error in
                 defer { dispatchGroup.leave() }
                 guard let data = data else { return }
                 
                 do {
+                    // Parse JSON.
                     let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
                     if let articles = json?["articles"] as? [[String: Any]] {
                         let parsedArticles = articles.compactMap { articleData -> Article? in
@@ -106,9 +109,13 @@ class DailyReadingViewController: UIViewController {
                             }
                             
                             let imageUrl = articleData["urlToImage"] as? String
-                            let article = Article(title: title, description: description, url: url, imageUrl: imageUrl, source: source)
+                            let article = Article(title: title,
+                                                  description: description,
+                                                  url: url,
+                                                  imageUrl: imageUrl,
+                                                  source: source)
                             
-                            // Check for duplicate article URLs.
+                            // Ensure there are no duplicate URLs.
                             var isDuplicate = false
                             syncQueue.sync {
                                 if usedArticleURLs.contains(article.url) {
@@ -121,7 +128,9 @@ class DailyReadingViewController: UIViewController {
                         }
                         
                         if !parsedArticles.isEmpty {
-                            self?.articlesByInterest.append((interest: interest, articles: parsedArticles))
+                            syncQueue.sync {
+                                results.append((interest: interest, articles: parsedArticles))
+                            }
                         }
                     }
                 } catch {
@@ -130,8 +139,9 @@ class DailyReadingViewController: UIViewController {
             }.resume()
         }
         
-        // When all fetches are complete, reload the table view.
+        // Reload the table view only after all fetches are complete.
         dispatchGroup.notify(queue: .main) { [weak self] in
+            self?.articlesByInterest = results
             self?.tableView.reloadData()
             self?.refreshControl.endRefreshing()
         }
