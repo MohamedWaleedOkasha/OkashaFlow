@@ -33,15 +33,28 @@ class MainTabBarController: UITabBarController {
         let button = UIButton(type: .system)
         button.setImage(UIImage(systemName: "line.horizontal.3"), for: .normal)
         button.tintColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
-        // Clear background instead of systemBackground.
         button.backgroundColor = .clear
-        button.layer.cornerRadius = 22  // 44x44 button
+        button.layer.cornerRadius = 22
         button.clipsToBounds = true
         button.translatesAutoresizingMaskIntoConstraints = false
         return button
     }()
     
-    // A simple vertical stack for menu items; reused from HomeScreenViewController styling.
+    private let aiButton: UIButton = {
+        let button = UIButton(type: .custom)
+        button.setImage(UIImage(systemName: "brain.head.profile"), for: .normal)
+        button.tintColor = .white
+        button.backgroundColor = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
+        button.layer.cornerRadius = 35
+        button.clipsToBounds = true
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.layer.shadowColor = UIColor.black.cgColor
+        button.layer.shadowOpacity = 0.3
+        button.layer.shadowOffset = CGSize(width: 0, height: 5)
+        button.layer.shadowRadius = 5
+        return button
+    }()
+    
     private let menuStackView: UIStackView = {
         let stack = UIStackView()
         stack.axis = .vertical
@@ -54,9 +67,10 @@ class MainTabBarController: UITabBarController {
         super.viewDidLoad()
         setupViewControllers()
         setupMenuUI()
+        // Remove or comment out the custom AI button setup:
+        // setupAIButton()
         addTopBorderToTabBar()
-        // Force immediate layout so updateMenuButtonVisibility is applied right away.
-        view.layoutIfNeeded()  
+        view.layoutIfNeeded()
         updateMenuButtonVisibility()
     }
     
@@ -67,7 +81,6 @@ class MainTabBarController: UITabBarController {
     
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        // Ensure the state is correct after layout adjustments
         updateMenuButtonVisibility()
     }
     
@@ -81,45 +94,41 @@ class MainTabBarController: UITabBarController {
     }
     
     private func setupViewControllers() {
-        // Instantiate the view controllers
         let homeVC = HomeScreenViewController()
         let dailyTaskManagerVC = DailyTaskManagerViewController()
+        let aiVC = AIViewController()         // AI page as the third tab
         let calendarVC = CalendarViewController()
         let notesVC = NotesViewController()
         
-        // Wrap each in a navigation controller and set delegate.
         let homeNav = UINavigationController(rootViewController: homeVC)
         let tasksNav = UINavigationController(rootViewController: dailyTaskManagerVC)
+        let aiNav = UINavigationController(rootViewController: aiVC)
         let calendarNav = UINavigationController(rootViewController: calendarVC)
         let notesNav = UINavigationController(rootViewController: notesVC)
         
-        // Set self as the navigation delegate for each navigation controller.
         homeNav.delegate = self
         tasksNav.delegate = self
+        aiNav.delegate = self
         calendarNav.delegate = self
         notesNav.delegate = self
         
-        // Set tab bar items with titles and SF Symbols
         homeNav.tabBarItem = UITabBarItem(title: "Home", image: UIImage(systemName: "list.bullet"), tag: 0)
         tasksNav.tabBarItem = UITabBarItem(title: "Daily Agenda", image: UIImage(systemName: "doc.text.fill"), tag: 1)
-        calendarNav.tabBarItem = UITabBarItem(title: "Calendar", image: UIImage(systemName: "calendar"), tag: 2)
-        notesNav.tabBarItem = UITabBarItem(title: "Notes", image: UIImage(systemName: "note.text"), tag: 3)
+        aiNav.tabBarItem = UITabBarItem(title: "AI", image: UIImage(systemName: "brain.head.profile"), tag: 2)
+        calendarNav.tabBarItem = UITabBarItem(title: "Calendar", image: UIImage(systemName: "calendar"), tag: 3)
+        notesNav.tabBarItem = UITabBarItem(title: "Notes", image: UIImage(systemName: "note.text"), tag: 4)
         
-        // Set view controllers of the tab bar
-        viewControllers = [homeNav, tasksNav, calendarNav, notesNav]
+        viewControllers = [homeNav, tasksNav, aiNav, calendarNav, notesNav]
     }
     
     private func setupMenuUI() {
-        // Add overlay, side menu, and menu button to the TabBarController's view.
         view.addSubview(overlayView)
         view.addSubview(sideMenuView)
         view.addSubview(menuButton)
         
-        // Setup the menu stack with buttons and separators as used in HomeScreenViewController.
         setupMenuItems()
         sideMenuView.addSubview(menuStackView)
         
-        // Layout overlay to fill the screen.
         NSLayoutConstraint.activate([
             overlayView.topAnchor.constraint(equalTo: view.topAnchor),
             overlayView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -127,7 +136,6 @@ class MainTabBarController: UITabBarController {
             overlayView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
         
-        // Layout sideMenuView along the left.
         NSLayoutConstraint.activate([
             sideMenuView.topAnchor.constraint(equalTo: view.topAnchor),
             sideMenuView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
@@ -135,29 +143,36 @@ class MainTabBarController: UITabBarController {
             sideMenuView.widthAnchor.constraint(equalToConstant: sideMenuWidth)
         ])
         
-        // Layout menuStackView inside sideMenuView.
         NSLayoutConstraint.activate([
             menuStackView.topAnchor.constraint(equalTo: sideMenuView.safeAreaLayoutGuide.topAnchor, constant: 20),
             menuStackView.leadingAnchor.constraint(equalTo: sideMenuView.leadingAnchor, constant: 20),
             menuStackView.trailingAnchor.constraint(equalTo: sideMenuView.trailingAnchor, constant: -20)
         ])
         
-        // Layout the menu button in the top-left corner.
         NSLayoutConstraint.activate([
-            // Lower the constant to move the button higher.
             menuButton.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 4),
             menuButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 10),
             menuButton.widthAnchor.constraint(equalToConstant: 44),
             menuButton.heightAnchor.constraint(equalToConstant: 44)
         ])
         
-        // Add tap gesture to overlay and menu button target.
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTapOutside))
         overlayView.addGestureRecognizer(tapGesture)
         menuButton.addTarget(self, action: #selector(toggleSideMenu), for: .touchUpInside)
         
-        // Ensure the side menu is hidden (off-screen) at launch.
         sideMenuView.transform = CGAffineTransform(translationX: -sideMenuWidth, y: 0)
+    }
+    
+    private func setupAIButton() {
+        tabBar.addSubview(aiButton)
+        aiButton.addTarget(self, action: #selector(aiButtonTapped), for: .touchUpInside)
+        
+        NSLayoutConstraint.activate([
+            aiButton.centerXAnchor.constraint(equalTo: tabBar.centerXAnchor),
+            aiButton.centerYAnchor.constraint(equalTo: tabBar.topAnchor, constant: 0),
+            aiButton.widthAnchor.constraint(equalToConstant: 70),
+            aiButton.heightAnchor.constraint(equalToConstant: 70)
+        ])
     }
     
     @objc private func toggleSideMenu() {
@@ -170,12 +185,10 @@ class MainTabBarController: UITabBarController {
         }, completion: { _ in
             if !self.isSideMenuOpen {
                 self.overlayView.isHidden = true
-                // Update visibility after closing side menu.
                 self.updateMenuButtonVisibility()
             }
         })
         
-        // Hide the menu button when side menu is active.
         if isSideMenuOpen {
             menuButton.isHidden = true
         }
@@ -187,10 +200,8 @@ class MainTabBarController: UITabBarController {
         }
     }
     
-    // New helper function to hide the side menu with animation.
     private func hideSideMenu(completion: @escaping () -> Void) {
         if isSideMenuOpen {
-            // Immediately hide the menu button
             menuButton.isHidden = true
             
             UIView.animate(withDuration: 0.3, animations: {
@@ -208,15 +219,10 @@ class MainTabBarController: UITabBarController {
 
     @objc private func menuItemTapped(_ sender: UIButton) {
         guard let title = sender.title(for: .normal) else { return }
-        // Get the navigation controller from the selected tab.
         guard let nav = selectedViewController as? UINavigationController else { return }
         
-        // Hide the menu first, then navigate.
         hideSideMenu {
             switch title {
-            // case "Edit Profile":
-            //     let profileVC = EditProfileViewController()
-            //     nav.pushViewController(profileVC, animated: true)
             case "Interests":
                 let interestsVC = InterestsViewController()
                 nav.pushViewController(interestsVC, animated: true)
@@ -256,9 +262,14 @@ class MainTabBarController: UITabBarController {
         }
     }
     
+    @objc private func aiButtonTapped() {
+        guard let nav = selectedViewController as? UINavigationController else { return }
+        let aiVC = AIViewController()
+        nav.pushViewController(aiVC, animated: true)
+    }
+    
     private func setupMenuItems() {
         let menuItems = [
-            // ("Edit Profile", "person.crop.circle"),
             ("Interests", "star.fill"),
             ("Completed Tasks", "checkmark.seal.fill"),
             ("Daily Reading", "book.closed.fill"),
@@ -269,7 +280,6 @@ class MainTabBarController: UITabBarController {
         
         let customBlue = UIColor(red: 10/255, green: 5/255, blue: 163/255, alpha: 1)
         
-        // Clear any existing arranged subviews
         menuStackView.arrangedSubviews.forEach { $0.removeFromSuperview() }
         
         for (index, item) in menuItems.enumerated() {
@@ -278,9 +288,7 @@ class MainTabBarController: UITabBarController {
             button.setTitle(title, for: .normal)
             button.setImage(UIImage(systemName: imageName), for: .normal)
             
-            // Increase font size and change weight
             button.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
-            // Adjust content alignment and spacing between image and title
             button.contentHorizontalAlignment = .left
             button.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
             button.titleEdgeInsets = UIEdgeInsets(top: 0, left: 12, bottom: 0, right: 0)
@@ -290,7 +298,6 @@ class MainTabBarController: UITabBarController {
             button.addTarget(self, action: #selector(menuItemTapped(_:)), for: .touchUpInside)
             menuStackView.addArrangedSubview(button)
             
-            // Insert a thin separator between buttons, except after the last one.
             if index < menuItems.count - 1 {
                 let separator = UIView()
                 separator.translatesAutoresizingMaskIntoConstraints = false
@@ -321,7 +328,6 @@ class MainTabBarController: UITabBarController {
 // MARK: - UINavigationControllerDelegate
 extension MainTabBarController: UINavigationControllerDelegate {
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-        // If the viewController is the root and the side menu is not open, show the menu button immediately.
         if let firstVC = navigationController.viewControllers.first,
            viewController === firstVC && !isSideMenuOpen {
             menuButton.isHidden = false
@@ -331,7 +337,6 @@ extension MainTabBarController: UINavigationControllerDelegate {
     }
     
     func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
-        // Optionally, you can validate the state here again.
         updateMenuButtonVisibility()
     }
 }

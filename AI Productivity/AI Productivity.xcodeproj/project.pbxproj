@@ -12,6 +12,7 @@
 		C932241D2D635B080098C922 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = C932241C2D635B080098C922 /* FirebaseCore */; };
 		C932242C2D6397A50098C922 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = C932242B2D6397A50098C922 /* GoogleSignIn */; };
 		C932242E2D6397A50098C922 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = C932242D2D6397A50098C922 /* GoogleSignInSwift */; };
+		C938110E2DB6D25700BB71C1 /* OpenAISwift in Frameworks */ = {isa = PBXBuildFile; productRef = C938110D2DB6D25700BB71C1 /* OpenAISwift */; };
 		C9D5E78F2D7F650F00885CC7 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = C9D5E78E2D7F650F00885CC7 /* SwiftSoup */; };
 		C9FB5C8A2D79C3EC007AB384 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = C9FB5C892D79C3EC007AB384 /* FirebaseStorage */; };
 		C9FB5C8C2D79C3EC007AB384 /* FirebaseStorageCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = C9FB5C8B2D79C3EC007AB384 /* FirebaseStorageCombine-Community */; };
@@ -51,6 +52,7 @@
 				C9FB5C8C2D79C3EC007AB384 /* FirebaseStorageCombine-Community in Frameworks */,
 				C93224192D635B080098C922 /* FirebaseAnalytics in Frameworks */,
 				C932242C2D6397A50098C922 /* GoogleSignIn in Frameworks */,
+				C938110E2DB6D25700BB71C1 /* OpenAISwift in Frameworks */,
 				C932241D2D635B080098C922 /* FirebaseCore in Frameworks */,
 				C9D5E78F2D7F650F00885CC7 /* SwiftSoup in Frameworks */,
 				C932241B2D635B080098C922 /* FirebaseAuth in Frameworks */,
@@ -105,6 +107,7 @@
 				C9FB5C892D79C3EC007AB384 /* FirebaseStorage */,
 				C9FB5C8B2D79C3EC007AB384 /* FirebaseStorageCombine-Community */,
 				C9D5E78E2D7F650F00885CC7 /* SwiftSoup */,
+				C938110D2DB6D25700BB71C1 /* OpenAISwift */,
 			);
 			productName = "AI Productivity";
 			productReference = C93223FD2D6351CF0098C922 /* AI Productivity.app */;
@@ -138,6 +141,7 @@
 				C93224172D635B080098C922 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				C932242A2D6397A50098C922 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				C9D5E78D2D7F650F00885CC7 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				C938110C2DB6D25700BB71C1 /* XCRemoteSwiftPackageReference "OpenAISwift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C93223FE2D6351CF0098C922 /* Products */;
@@ -387,6 +391,14 @@
 				minimumVersion = 8.0.0;
 			};
 		};
+		C938110C2DB6D25700BB71C1 /* XCRemoteSwiftPackageReference "OpenAISwift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adamrushy/OpenAISwift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.4.1;
+			};
+		};
 		C9D5E78D2D7F650F00885CC7 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
@@ -422,6 +434,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C932242A2D6397A50098C922 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
 			productName = GoogleSignInSwift;
+		};
+		C938110D2DB6D25700BB71C1 /* OpenAISwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C938110C2DB6D25700BB71C1 /* XCRemoteSwiftPackageReference "OpenAISwift" */;
+			productName = OpenAISwift;
 		};
 		C9D5E78E2D7F650F00885CC7 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
