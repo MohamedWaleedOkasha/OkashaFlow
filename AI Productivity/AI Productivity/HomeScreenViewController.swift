@@ -233,11 +233,11 @@ private let addTaskButton: UIButton = {
         let notesVC = NotesViewController()
         navigationController?.pushViewController(notesVC, animated: true)
     }
-    
-    @objc private func aiChatTapped() {
-        let chatbotVC = ChatbotViewController()
-          navigationController?.pushViewController(chatbotVC, animated: true)
-    }
+//    
+//    @objc private func aiChatTapped() {
+//        let chatbotVC = ChatbotViewController()
+//          navigationController?.pushViewController(chatbotVC, animated: true)
+//    }
     
     @objc private func addCalendarTapped() {
         let calendarVC = CalendarViewController()

@@ -220,6 +220,8 @@ class CalendarViewController: UIViewController, UICollectionViewDataSource, UICo
         // Optionally, add a menu button target to toggle the menu
         // For example:
         // menuButton.addTarget(self, action: #selector(toggleSideMenu), for: .touchUpInside)
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(handleCalendarTaskAdded(_:)), name: .calendarTaskAdded, object: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -870,6 +872,15 @@ extension CalendarViewController {
                 return taskStart == dayStart
             }
         }
+    }
+    
+    @objc private func handleCalendarTaskAdded(_ notification: Notification) {
+        guard let newCalendarTask = notification.object as? CalendarTask else { return }
+        tasks.append(newCalendarTask)
+        savePersistedTasks()
+        computeDaysInMonth(for: selectedDate)
+        loadTasksForSelectedDate()
+        calendarCollectionView.reloadData()
     }
 }
 
