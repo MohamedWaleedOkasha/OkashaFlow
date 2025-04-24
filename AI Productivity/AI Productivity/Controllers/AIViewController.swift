@@ -281,8 +281,7 @@ class AIViewController: UIViewController {
     }
     
     @objc private func handleSend() {
-        guard let text = inputTextView.text,
-              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard let text = inputTextView.text, !text.isEmpty else { return }
         
         // Append user message
         let userMessage = ChatMessage(sender: .user, text: text)
@@ -303,7 +302,28 @@ class AIViewController: UIViewController {
         inputTextView.text = ""
         view.endEditing(true)
         
-        // Fetch AI response and update the placeholder cell when ready.
+        // Check if the message includes a calendar command:
+        if text.lowercased().contains("add") && text.lowercased().contains("calendar") {
+            // Parse the text to extract task/event details (e.g. title, time, date)
+            // Example: “Add meeting with Bob at 3 PM tomorrow”
+            let title = extractTitle(from: text)
+            let eventDate = extractDate(from: text) ?? Date()
+            
+            // Then call your calendar-adding logic. For instance:
+            addCalendarEvent(title: title, date: eventDate)
+            
+            // Optionally, append a confirmation message in the conversation.
+            let confirmation = ChatMessage(sender: .ai, text: "I've added the calendar event for \(title).")
+            messages.append(confirmation)
+            tableView.reloadData()
+            scrollToBottom()
+            
+            // Clear input and return early.
+            inputTextView.text = ""
+            return
+        }
+        
+        // Otherwise, proceed to call your fetchAIResponse(for:) as normal.
         fetchAIResponse(for: text, placeholderIndex: placeholderIndex)
     }
     
@@ -483,7 +503,7 @@ class AIViewController: UIViewController {
         request.addValue("Bearer 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", forHTTPHeaderField: "Authorization")
         
         let messagePayload: [[String: String]] = [
-            ["role": "system", "content": "You are OKSH, an assistant specialized in productivity. Only respond to queries regarding productivity topics, such as calendar events, daily agendas, meetings, studies, work, and related matters. If a query is not productivity-related, respond with 'I can only assist with productivity-related inquiries.'"],
+            ["role": "system", "content": "You are OKSH, an assistant specialized in productivity. You have access to the user's recent conversation history and personal information (such as their name and task history). Answer queries related to productivity and also personal inquiries like 'what was my last task?' or 'what is my name?' accordingly."],
             ["role": "user", "content": prompt]
         ]
         
@@ -561,6 +581,12 @@ class AIViewController: UIViewController {
                 print("JSON parsing error: \(error.localizedDescription)")
             }
         }.resume()
+    }
+    
+    private func addCalendarEvent(title: String, date: Date) {
+        let newTask = CalendarTask(title: title, date: date, recurrence: nil)
+        // Post a notification so that the CalendarViewController (or another manager) updates its tasks and persists the change.
+        NotificationCenter.default.post(name: .calendarTaskAdded, object: newTask)
     }
 }
 
@@ -908,8 +934,11 @@ private func formattedTime(from date: Date) -> String {
 
 // MARK: - Conversation Persistence
 extension AIViewController {
+    
     private func saveConversation() {
-        if let data = try? JSONEncoder().encode(messages) {
+        // Save only the last 30 messages.
+        let last30Messages = Array(messages.suffix(30))
+        if let data = try? JSONEncoder().encode(last30Messages) {
             UserDefaults.standard.set(data, forKey: "conversationMemory")
         }
     }
@@ -921,5 +950,21 @@ extension AIViewController {
             tableView.reloadData()
             scrollToBottom()
         }
+    }
+    
+    // MARK: - User Preferences Methods
+    
+    func saveUserPreferences(_ preferences: UserPreferences) {
+        if let data = try? JSONEncoder().encode(preferences) {
+            UserDefaults.standard.set(data, forKey: "userPreferences")
+        }
+    }
+    
+    func loadUserPreferences() -> UserPreferences? {
+        if let data = UserDefaults.standard.data(forKey: "userPreferences"),
+           let preferences = try? JSONDecoder().decode(UserPreferences.self, from: data) {
+            return preferences
+        }
+        return nil
     }
 }

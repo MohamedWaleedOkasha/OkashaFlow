@@ -233,7 +233,7 @@ private let addTaskButton: UIButton = {
         let notesVC = NotesViewController()
         navigationController?.pushViewController(notesVC, animated: true)
     }
-//    
+//
 //    @objc private func aiChatTapped() {
 //        let chatbotVC = ChatbotViewController()
 //          navigationController?.pushViewController(chatbotVC, animated: true)
@@ -915,24 +915,48 @@ extension HomeScreenViewController: UITableViewDataSource, UITableViewDelegate {
     }
     
     private func showTaskDetails(_ task: Task) {
-        let alert = UIAlertController(title: task.title, message: nil, preferredStyle: .alert)
+        let overlay = UIView()
+        overlay.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        overlay.translatesAutoresizingMaskIntoConstraints = false
+        overlay.alpha = 0
+        view.addSubview(overlay)
         
-        // Create date formatter for the due date
-        let dueDateFormatter = DateFormatter()
-        dueDateFormatter.dateFormat = "MMM d, h:mm a"
-        let formattedDueDate = dueDateFormatter.string(from: task.dueDate)
+        let detailView = HomeTaskDetailView()
+        detailView.translatesAutoresizingMaskIntoConstraints = false
+        detailView.configure(with: task)
         
-        var description = "Description: \(task.description)\nDue: \(formattedDueDate)\nPriority: \(task.priority)\nCategory: \(task.category)"
-        
-        if let reminderDate = task.reminderDate {
-            let reminderFormatter = DateFormatter()
-            reminderFormatter.dateFormat = "MMM d, h:mm a"
-            description += "\nReminder set for: \(reminderFormatter.string(from: reminderDate))"
+        // When the user taps "x", update the model.
+        detailView.updateSubtasksState = { updatedState in
+            if let index = self.tasks.firstIndex(where: { $0.title == task.title && $0.dueDate == task.dueDate }) {
+                self.tasks[index].subtasksChecked = updatedState
+                self.saveTasks()
+            }
         }
         
-        alert.message = description
-        alert.addAction(UIAlertAction(title: "OK", style: .default))
-        present(alert, animated: true)
+        overlay.addSubview(detailView)
+        
+        NSLayoutConstraint.activate([
+            overlay.topAnchor.constraint(equalTo: view.topAnchor),
+            overlay.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            overlay.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            overlay.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            detailView.centerXAnchor.constraint(equalTo: overlay.centerXAnchor),
+            detailView.centerYAnchor.constraint(equalTo: overlay.centerYAnchor),
+            detailView.widthAnchor.constraint(equalToConstant: 350),
+            detailView.heightAnchor.constraint(equalToConstant: 250)
+        ])
+        
+        UIView.animate(withDuration: 0.3) {
+            overlay.alpha = 1
+        }
+        
+        detailView.closeAction = {
+            UIView.animate(withDuration: 0.3, animations: {
+                overlay.alpha = 0
+            }) { _ in
+                overlay.removeFromSuperview()
+            }
+        }
     }
 }
 

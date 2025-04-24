@@ -10,8 +10,18 @@ struct Task: Codable {
     var isCompleted: Bool
     let reminderDate: Date?
     let notificationId: String?
-    
-    init(title: String, description: String, time: String, priority: String, category: String, dueDate: Date, isCompleted: Bool = false, reminderDate: Date? = nil, notificationId: String? = nil) {
+    var subtasks: [String]  // New property to store subtasks
+    var subtasksChecked: [Bool]?
+    init(title: String,
+         description: String,
+         time: String,
+         priority: String,
+         category: String,
+         dueDate: Date,
+         isCompleted: Bool = false,
+         reminderDate: Date? = nil,
+         notificationId: String? = nil,
+         subtasks: [String] = []) { // New initializer parameter with default value
         self.title = title
         self.description = description
         self.time = time
@@ -21,6 +31,6 @@ struct Task: Codable {
         self.isCompleted = isCompleted
         self.reminderDate = reminderDate
         self.notificationId = notificationId
+        self.subtasks = subtasks
     }
 }
-

@@ -875,12 +875,13 @@ extension CalendarViewController {
     }
     
     @objc private func handleCalendarTaskAdded(_ notification: Notification) {
-        guard let newCalendarTask = notification.object as? CalendarTask else { return }
-        tasks.append(newCalendarTask)
+        guard let newTask = notification.object as? CalendarTask else { return }
+        // Append the new task to your calendar tasks
+        tasks.append(newTask)
+        // Persist the tasks as needed
         savePersistedTasks()
-        computeDaysInMonth(for: selectedDate)
-        loadTasksForSelectedDate()
-        calendarCollectionView.reloadData()
+        // Refresh your UI (e.g., reload a table or collection view)
+        tableView.reloadData()
     }
 }
 
